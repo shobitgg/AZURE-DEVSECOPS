@@ -37,3 +37,40 @@ Go via Project settings -> Pipelines -> Service Connections and create a new Azu
 In this case we are using it to authenticate to our azure container registry and push container images/helm charts to it. The required permissions have been granted during the terraform deployment. There are a couple of advantages to using scripts rather than the built in tasks — the results are reproduce-able, the process is easier to version, we can copy it over to another repo and as a bonus we can run the scripts offline.
 ## PIPELINE:
 ![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*uaI8izGiqK7FO8faxfE4iQ.png)
+
+
+
+The first one is the build stage (also named Build) which should not produce any artefacts — since everything will be already versioned inside our azure container registry. The only exception are the build scripts which need to match the git changeset of our release process that we are currently in- which is why we are publishing the scripts folder as part of our build process to the staging directory of each release process instance.
+
+![](https://miro.medium.com/v2/resize:fit:1050/format:webp/1*bI8RvzOJQqKAuGHrZgAGcg.png)
+
+As for the deployment stages we are defining a dependancy of the first deployment environment (here called DevDeploy) to the Build stage, give it a random name dev1 (the exact name does not matter but needs to be the same if we have multiple microservices in different release pipelines deploying to the same environment) and introduce the Azure KeyVault instance name dzphoenix-180-vault as a stage variable. All the variables will be accessible under the same name in our bash scripts.
+
+The script deploy_multicalulator.sh will use the azure cli context to authenticate to the configured Azure KeyVault instance, collect the environment specific variables and perform a deployment to the corresponding AKS cluster.
+![](https://miro.medium.com/v2/resize:fit:1218/format:webp/1*wrWsYNQaoBs0FKvDRAecIg.png)
+
+Since we also want to make sure that our deployment actually works we are triggering a traffic script that will in our case do nothing else but check if the ingress controller actually serves our application.
+![](https://miro.medium.com/v2/resize:fit:1246/format:webp/1*omZZ8ozujt05E_KxrmVlCg.png)
+
+Just in case that something goes wrong we are triggering a rollback script that will perform a helm rollback to the latest working helm deployment.
+
+
+Just in case that something goes wrong we are triggering a rollback script that will perform a helm rollback to the latest working helm deployment.
+!{](https://miro.medium.com/v2/resize:fit:1250/format:webp/1*OKr6LV9_skVKWDotP-kTpA.png)
+
+Assuming everything works fine we will see our change getting automatically deployed across all configured stages.
+
+
+
+![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*zEgcBT_M8mlxHgHiTpy67w.png)
+If you check the ‘Environments’ tab on the left you can see every release status across all deployments — which is very useful if you have not only one release pipeline, but a dedicated pipeline for each microservice.
+
+You can retrieve the public dns (which is depending on the public ip of the ingress controller inside the cluster) by looking at the log output of the routetraffic task.
+
+![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*PAhODJIuVwKibryPXfQNLQ.png)
+Assuming your deployment pipeline works you can now go ahead change sourcecode and see your changes flowing through all of your environments without interrupting your users.
+
+
+
+![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*uwnXCfbpzOGp0shrQYpKUw.png)
+
