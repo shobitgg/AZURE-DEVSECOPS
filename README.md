@@ -33,5 +33,7 @@ Next you should create your Azure DevOps instance by going to dev.azure.com to c
 
 Go via Project settings -> Pipelines -> Service Connections and create a new Azure Resource Manager connection with Service Principal (manual) and Enter all the values from the terraform deployment output. Also make sure that your Service Connection Name is either set to defaultAzure or matches the name in the pipeline template.
 
+![](https://miro.medium.com/v2/resize:fit:1140/format:webp/1*AWl1dprZ9UvUTXtg3JtbPg.png)
+In this case we are using it to authenticate to our azure container registry and push container images/helm charts to it. The required permissions have been granted during the terraform deployment. There are a couple of advantages to using scripts rather than the built in tasks — the results are reproduce-able, the process is easier to version, we can copy it over to another repo and as a bonus we can run the scripts offline.
 ## PIPELINE:
 ![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*uaI8izGiqK7FO8faxfE4iQ.png)
