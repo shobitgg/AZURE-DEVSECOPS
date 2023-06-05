@@ -1,5 +1,4 @@
-Continuous building, gating and releasing using AzureDevOps, Helm3, Application Insights and AKS with automated rollback
-
+#microservices #AzureDevOps, #Helm3, #Application Insights #blue-green deployments #Nginx
 ## Architecture 
 
 ![image](https://github.com/shobitgg/AZURE-DEVSECOPS/assets/41900814/0c49923f-7294-4757-b30a-f954a8157649)
