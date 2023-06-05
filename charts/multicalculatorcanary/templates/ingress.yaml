@@ -1,0 +1,53 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "multicalculatorcanary.fullname" . }}
+  labels:
+    {{- include "multicalculatorcanary.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.canary }}
+    appgw.ingress.kubernetes.io/connection-draining: "true"
+    appgw.ingress.kubernetes.io/connection-draining-timeout: "60"
+    appgw.ingress.kubernetes.io/backend-path-prefix: "/"
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "canary"
+    nginx.ingress.kubernetes.io/canary-weight: "{{ .Values.ingress.weight }}"
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+spec:
+{{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+      - {{ .Values.ingress.host | quote }}
+      secretName: {{ include "multicalculatorcanary.fullname" . }}-tls
+{{- end }}
+  ingressClassName: {{ .Values.ingress.class }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+  {{- if and (.Values.canary) (eq .Values.ingress.class "azure/application-gateway") }}
+          - path: /canary/*
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "multicalculatorcanary.fullname" . }}-frontend-svc
+                port:
+                  number: {{ .Values.service.port }}
+  {{- else }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "multicalculatorcanary.fullname" . }}-frontend-svc
+                port:
+                  number: {{ .Values.service.port }}
+  {{- end }}
+{{- end }}
